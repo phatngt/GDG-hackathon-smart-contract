@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 
 export const signMessage = (recipient:string, amount:BigNumber,nonce:number,contractAddress:string) =>{
     let hash = ethers.utils.solidityKeccak256(
-        ["string","address","uint256","uint256","address"],
-        ["\x19Ethereum Signed Message:\n32",recipient,amount,nonce,contractAddress]);
-    return hash;
+        ["address","uint256","uint256","address"],
+        [recipient,amount,nonce,contractAddress]);
+    return ethers.utils.solidityKeccak256(["string","bytes32"],["\x19Ethereum Signed Message:\n32",hash]);
 }
