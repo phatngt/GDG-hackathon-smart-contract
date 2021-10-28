@@ -8,9 +8,9 @@ import { deployBank } from "./deployBank";
 import { transferOwnerShip } from "./transferOwnerShip";
 
 const main = async () => {
-  // const _awbcTokenAddress:string = (await deployAWBCToken()).address;
-  // const _backContractAddress:string = (await deployBank(_awbcTokenAddress)).address;
-  // await transferOwnerShip(_awbcTokenAddress,_backContractAddress);
+  const _awbcTokenAddress:string = (await deployAWBCToken()).address;
+  const _backContractAddress:string = (await deployBank(_awbcTokenAddress)).address;
+  await transferOwnerShip(_awbcTokenAddress,_backContractAddress);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

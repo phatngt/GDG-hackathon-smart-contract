@@ -3,10 +3,12 @@
 pragma solidity 0.8.0;
 import "hardhat/console.sol";
 import "./AWBCToken.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 contract Bank {
     mapping(address => uint256) private _balanceOf;
     AWBCToken public _token;
-    mapping(uint256 => bool) private usedNonces;
+    mapping(address=>mapping(uint256 => bool)) private usedNonces;
     address private _owner;
 
     event Deposit(address indexed from, uint256 indexed amount);
@@ -30,25 +32,30 @@ contract Bank {
         emit Deposit(msg.sender,amount);
     }
 
-    function withdraw(uint256 amount, uint256 nonce, bytes memory signature, string memory rawMessage) public{
-        require(!usedNonces[nonce], "Nonce has used");
-        usedNonces[nonce] = true;
-        // bytes32 rawMessage = keccak256("abcd");
-        bytes32 message = prefixed(rawMessage);
-        console.log("message in solidity");
-        console.logBytes32(message);
+    function withdraw(uint256 amount, uint256 nonce, bytes memory signature) public{
+        require(!usedNonces[msg.sender][nonce], "Nonce has used");
+        usedNonces[msg.sender][nonce] = true;
+        bytes32 rawMessage = keccak256(abi.encodePacked(msg.sender, amount,nonce,address(this)));
+        bytes memory s =  abi.encodePacked(rawMessage);
+        bytes32 message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n",Strings.toString(s.length),s));
         require(isValidAccessMessage(message, signature),"Message isn't correct");
-        require(_balanceOf[msg.sender] >= amount, "Balance is not enought");
-        unchecked {
-            _balanceOf[msg.sender] -= amount;
+        if(_balanceOf[msg.sender] < amount ){
+            uint256 remaining = amount -_balanceOf[msg.sender];
+            _balanceOf[msg.sender] += remaining;
+            if(_token.balanceOf(address(this)) < _balanceOf[msg.sender]){
+                _token.mint(address(this),remaining);
+            }
         }
-        _token.transferFrom(address(this),msg.sender, amount);
 
+        _token.approve(address(this),msg.sender,0);
+        _token.approve(address(this),msg.sender,amount);
+
+        _token.transferFrom(address(this),msg.sender, amount);
         emit Withdraw(msg.sender,amount);
 
     }
 
-    function splitSignature(bytes memory sig)internal view  returns(uint8 v, bytes32 r, bytes32 s) {
+    function splitSignature(bytes memory sig)internal pure returns(uint8 v, bytes32 r, bytes32 s) {
         require(sig.length == 65, "Signature isn't validate");
 
         assembly {
@@ -59,27 +66,12 @@ contract Bank {
             // final byte (first byte of the next 32 bytes).
             v := byte(0, mload(add(sig, 96)))
         }
-        // console.log("r: ");
-        // console.logBytes32(r);
-        // console.log("s: ");
-        // console.logBytes32(s);
-        // console.log("v: ",v);
         return (v,r,s);
     }
 
     function isValidAccessMessage(bytes32 message, bytes memory signature) public view returns (bool){
         (uint8 v, bytes32 r, bytes32 s) = splitSignature(signature);
-         console.log("message in here");
-        console.logBytes32(message);
-        console.log("_owner: ",ecrecover(message,v,r,s));
-        console.log("correct _owner: ",_owner);
         return ecrecover(message,v,r,s) == _owner;
-    }
-
-    function prefixed(string memory message) internal view returns (bytes32 ){
-        console.log("rawMessage in solidity");
-        string memory header = "\x19Ethereum Signed Message:\n66";
-        return keccak256(abi.encodePacked(header,message));
     }
 
 

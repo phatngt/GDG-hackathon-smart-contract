@@ -8,7 +8,5 @@ export const deployAWBCToken = async ():Promise<AWBCToken> => {
     const AWBCContractInstance = await AWBCTokenContractFactory.deploy();
     await AWBCContractInstance.deployed();
     console.log("Successfully deployed AWBCToken contract at ", AWBCContractInstance.address);
-    await AWBCContractInstance.mint(accounts[1].address,utils.parseEther("100"));
-    console.log("Mint to user 100 ether");
     return AWBCContractInstance;
 }
