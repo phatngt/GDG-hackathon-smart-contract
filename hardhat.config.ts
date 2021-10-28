@@ -4,6 +4,8 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
+import "@nomiclabs/hardhat-web3";
+import "@nomiclabs/hardhat-truffle5";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 
@@ -15,7 +17,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
   for (const account of accounts) {
-    console.log(account.address);
+    console.log(await account.signMessage("abc"));
   }
 });
 
@@ -40,6 +42,7 @@ const config: HardhatUserConfig = {
     timeout: 2000000,
   },
   networks: {
+
     bsc_testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       gas: 5000000,
