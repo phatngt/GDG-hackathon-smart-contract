@@ -46,7 +46,7 @@ contract Bank {
                 _token.mint(address(this),remaining);
             }
         }
-
+        _balanceOf[msg.sender] -= amount;
         _token.approve(address(this),msg.sender,0);
         _token.approve(address(this),msg.sender,amount);
 
